@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>StaffGate</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh}
+
+/* ── NAV ── */
+nav{background:#1e293b;border-bottom:1px solid #334155;padding:0 16px;display:flex;align-items:center;gap:6px;height:54px;flex-wrap:wrap}
+nav h1{font-size:15px;font-weight:800;color:#f8fafc;margin-right:auto}
+.nbadge{font-size:11px;background:#0ea5e9;color:#fff;padding:2px 8px;border-radius:99px}
+.nbadge.live{background:#22c55e}
+.nav-btn{padding:6px 12px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-weight:600;transition:.15s}
+.nav-btn.active{background:#0ea5e9;color:#fff}
+.nav-btn:not(.active){background:#334155;color:#94a3b8}
+.nav-btn:hover:not(.active){background:#475569;color:#e2e8f0}
+#btn-logout{background:#450a0a;color:#f87171;margin-left:4px}
+#btn-logout:hover{background:#ef4444;color:#fff}
+
+/* ── LOGIN SCREEN ── */
+#login-screen{display:none;position:fixed;inset:0;background:#0f172a;z-index:100;align-items:center;justify-content:center;flex-direction:column}
+#login-screen.visible{display:flex}
+.login-box{background:#1e293b;border:1px solid #334155;border-radius:16px;padding:36px 32px;width:100%;max-width:380px}
+.login-box h2{font-size:22px;font-weight:800;margin-bottom:4px;text-align:center}
+.login-box p{font-size:13px;color:#64748b;text-align:center;margin-bottom:24px}
+.login-box label{font-size:11px;color:#64748b;display:block;margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.login-box input{width:100%;background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:10px 14px;border-radius:8px;font-size:14px;outline:none;margin-bottom:14px}
+.login-box input:focus{border-color:#0ea5e9}
+.login-box .err{color:#f87171;font-size:13px;text-align:center;margin-bottom:10px;min-height:20px}
+.login-logo{font-size:40px;text-align:center;margin-bottom:16px}
+.scanner-link{margin-top:18px;text-align:center;font-size:12px;color:#64748b}
+.scanner-link a{color:#38bdf8;cursor:pointer;text-decoration:underline}
+
+/* ── LAYOUT ── */
+.page{display:none;padding:20px;max-width:1100px;margin:0 auto}
+.page.active{display:block}
+h2{font-size:18px;font-weight:700;margin-bottom:14px;color:#f1f5f9}
+.card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:18px;margin-bottom:14px}
+.card h3{font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:640px){.grid2,.grid3{grid-template-columns:1fr}}
+.stat{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:18px;text-align:center}
+.stat .num{font-size:34px;font-weight:800;color:#0ea5e9}
+.stat .lbl{font-size:12px;color:#64748b;margin-top:4px}
+.form-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+input,select{background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:8px 12px;border-radius:8px;font-size:13px;outline:none;flex:1;min-width:130px}
+input:focus,select:focus{border-color:#0ea5e9}
+input[type="time"]{min-width:110px}
+.btn{padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:600;transition:.15s;white-space:nowrap}
+.btn-primary{background:#0ea5e9;color:#fff}.btn-primary:hover{background:#0284c7}
+.btn-success{background:#22c55e;color:#fff}.btn-success:hover{background:#16a34a}
+.btn-danger{background:#ef4444;color:#fff}.btn-danger:hover{background:#dc2626}
+.btn-ghost{background:#334155;color:#94a3b8}.btn-ghost:hover{background:#475569;color:#e2e8f0}
+.btn-warn{background:#f59e0b;color:#000}
+.btn-sm{padding:4px 10px;font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px 10px;color:#64748b;border-bottom:1px solid #334155;font-weight:600;font-size:11px;text-transform:uppercase}
+td{padding:9px 10px;border-bottom:1px solid #1a2744;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+.badge{display:inline-block;padding:2px 9px;border-radius:99px;font-size:11px;font-weight:700}
+.bg{background:#14532d;color:#4ade80}
+.br{background:#450a0a;color:#f87171}
+.by{background:#422006;color:#fbbf24}
+.bb{background:#0c2a3e;color:#38bdf8}
+.ucode{display:inline-block;background:#1e1b4b;color:#a5b4fc;border:1px solid #4338ca;border-radius:6px;padding:2px 10px;font-family:monospace;font-size:13px;font-weight:700;letter-spacing:.1em}
+
+/* ── SCANNER ── */
+.scan-tabs{display:flex;gap:0;margin-bottom:16px;border-radius:10px;overflow:hidden;border:1px solid #334155}
+.scan-tab{flex:1;padding:10px;text-align:center;cursor:pointer;font-size:13px;font-weight:600;transition:.15s;background:#0f172a;color:#64748b;border:none}
+.scan-tab.active{background:#0ea5e9;color:#fff}
+#scanner-box{background:#000;border-radius:12px;overflow:hidden;max-width:420px;margin:0 auto}
+#scan-result{text-align:center;padding:28px 20px;border-radius:12px;margin-top:14px;display:none}
+.result-ok{background:#14532d;border:2px solid #22c55e}
+.result-deny{background:#450a0a;border:2px solid #ef4444}
+.result-icon{font-size:60px;margin-bottom:8px}
+.result-name{font-size:22px;font-weight:800}
+.result-dept{font-size:13px;color:#94a3b8;margin-top:2px}
+.result-msg{font-size:14px;margin-top:10px;line-height:1.6;white-space:pre-line}
+
+/* ── QR CARDS ── */
+.staff-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+.staff-card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:14px;text-align:center}
+.staff-card .sname{font-weight:700;font-size:14px;margin-bottom:2px}
+.staff-card .sdept{font-size:12px;color:#64748b;margin-bottom:10px}
+.qr-wrap{background:#fff;border-radius:8px;padding:8px;display:inline-block;margin-bottom:10px}
+
+/* ── EXIT ITEMS ── */
+.exit-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:#0f172a;border-radius:8px;margin-bottom:6px;border:1px solid #1e293b}
+.exit-item .ei{flex:1}
+.exit-item .ename{font-weight:600;font-size:13px}
+.exit-item .emeta{font-size:12px;color:#64748b;margin-top:2px}
+
+/* ── CHANGE PASSWORD ── */
+.pw-row{display:flex;flex-direction:column;gap:10px}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:20px;right:20px;background:#0ea5e9;color:#fff;padding:10px 18px;border-radius:10px;font-size:13px;font-weight:600;transform:translateY(80px);transition:.3s;z-index:999;max-width:280px}
+#toast.show{transform:translateY(0)}
+#toast.err{background:#ef4444}
+#toast.ok{background:#22c55e}
+</style>
+</head>
+<body>
+
+<!-- ══════════════ LOGIN SCREEN ══════════════ -->
+<div id="login-screen" class="visible">
+  <div class="login-box">
+    <div class="login-logo">🔐</div>
+    <h2>StaffGate Admin</h2>
+    <p>Sign in to access the admin dashboard</p>
+    <div class="err" id="login-err"></div>
+    <label>Username</label>
+    <input id="login-user" placeholder="admin" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('login-pass').focus()"/>
+    <label>Password</label>
+    <input id="login-pass" type="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"/>
+    <button class="btn btn-primary" style="width:100%;padding:11px" onclick="doLogin()">Sign In →</button>
+    <div class="scanner-link">Security staff? <a onclick="goScanner()">Go to Scanner →</a></div>
+  </div>
+</div>
+
+<!-- ══════════════ NAV ══════════════ -->
+<nav id="main-nav" style="display:none">
+  <h1>🔐 StaffGate</h1>
+  <span class="nbadge" id="mode-badge">DEMO</span>
+  <button class="nav-btn active" onclick="showPage('admin',this)">Dashboard</button>
+  <button class="nav-btn" onclick="showPage('exits',this)">Exit Log</button>
+  <button class="nav-btn" onclick="showPage('qrcodes',this)">ID Cards</button>
+  <button class="nav-btn" onclick="showPage('settings',this)">⚙ Setup</button>
+  <button class="nav-btn" id="btn-logout" onclick="doLogout()">Sign Out</button>
+</nav>
+
+<!-- ══════════════ SCANNER (no auth) ══════════════ -->
+<div id="scanner-shell" style="display:none">
+  <nav>
+    <h1>🔐 StaffGate — Gate Scanner</h1>
+    <button class="nav-btn" onclick="goAdminLogin()" style="margin-left:auto">Admin Login</button>
+  </nav>
+  <div style="padding:20px;max-width:500px;margin:0 auto">
+    <div class="card">
+      <h3>Security — Scan or Enter Code</h3>
+      <div style="margin-bottom:14px">
+        <label style="font-size:11px;color:#64748b;display:block;margin-bottom:6px">Direction</label>
+        <select id="scan-dir" style="width:100%">
+          <option value="entry">↓ Entry (Coming In)</option>
+          <option value="exit">↑ Exit (Going Out)</option>
+        </select>
+      </div>
+      <div class="scan-tabs">
+        <button class="scan-tab active" onclick="setScanMode('qr',this)">📷 QR Camera</button>
+        <button class="scan-tab" onclick="setScanMode('code',this)">🔢 Unique Code</button>
+      </div>
+      <!-- QR mode -->
+      <div id="qr-scan-area">
+        <div style="text-align:center;margin-bottom:10px">
+          <button class="btn btn-primary" id="scan-toggle" onclick="toggleScanner()">Start Camera</button>
+        </div>
+        <div id="scanner-box"><div id="qr-reader" style="width:100%"></div></div>
+      </div>
+      <!-- Code mode -->
+      <div id="code-input-area" style="display:none">
+        <div style="max-width:420px;margin:0 auto">
+          <input id="code-field" placeholder="e.g. AMK01" maxlength="10" style="font-family:monospace;font-size:22px;font-weight:700;letter-spacing:.2em;text-align:center;padding:18px;text-transform:uppercase;border:2px solid #334155;border-radius:12px;width:100%"
+            oninput="this.value=this.value.toUpperCase()"
+            onkeydown="if(event.key==='Enter')submitCode()"/>
+          <button class="btn btn-primary" style="width:100%;margin-top:10px" onclick="submitCode()">Verify Code →</button>
+        </div>
+      </div>
+      <!-- Result -->
+      <div id="scan-result">
+        <div class="result-icon" id="res-icon"></div>
+        <div class="result-name" id="res-name"></div>
+        <div class="result-dept" id="res-dept"></div>
+        <div class="result-msg" id="res-msg"></div>
+        <br>
+        <button class="btn btn-primary" onclick="resetScan()">Next Scan</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ ADMIN PAGES ══════════════ -->
+<!-- DASHBOARD -->
+<div class="page" id="page-admin">
+  <div class="grid3" style="margin-bottom:16px">
+    <div class="stat"><div class="num" id="stat-staff">0</div><div class="lbl">Total Staff</div></div>
+    <div class="stat"><div class="num" id="stat-exits" style="color:#a78bfa">0</div><div class="lbl">Exit Approvals (unused)</div></div>
+    <div class="stat"><div class="num" id="stat-today" style="color:#22c55e">0</div><div class="lbl">Scans Today</div></div>
+  </div>
+  <div class="grid2">
+    <div>
+      <div class="card">
+        <h3>Add Staff Member</h3>
+        <div class="form-row">
+          <input id="in-name" placeholder="Full Name"/>
+          <input id="in-dept" placeholder="Department"/>
+        </div>
+        <div class="form-row">
+          <input id="in-email" placeholder="Email (optional)"/>
+          <div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:120px">
+            <label style="font-size:11px;color:#64748b">Closing Time</label>
+            <input type="time" id="in-close" value="17:00"/>
+          </div>
+        </div>
+        <div class="form-row" style="align-items:center">
+          <input id="in-ucode" placeholder="Unique Code e.g. AMK01" style="text-transform:uppercase;font-family:monospace;font-weight:700;letter-spacing:.1em"/>
+          <button class="btn btn-ghost btn-sm" onclick="generateCode()">🎲 Generate</button>
+        </div>
+        <button class="btn btn-primary" onclick="addStaff()" style="width:100%">+ Add Staff Member</button>
+      </div>
+      <div class="card">
+        <h3>Staff List</h3>
+        <table>
+          <thead><tr><th>Name</th><th>Dept</th><th>Code</th><th>Closes</th><th></th></tr></thead>
+          <tbody id="staff-table"></tbody>
+        </table>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <h3>Access Log (Recent)</h3>
+        <table>
+          <thead><tr><th>Name</th><th>Dir</th><th>Via</th><th>Result</th><th>Time</th></tr></thead>
+          <tbody id="log-table"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EXIT LOG -->
+<div class="page" id="page-exits">
+  <h2>🚪 Exit Approval Log</h2>
+  <div class="card" style="max-width:560px">
+    <h3>Log an Exit Approval</h3>
+    <p style="font-size:13px;color:#94a3b8;margin-bottom:14px;line-height:1.6">Select a staff member to approve their exit. Single-use — consumed on scan.</p>
+    <div class="form-row"><select id="exit-staff-sel"><option value="">— Select Staff Member —</option></select></div>
+    <div class="form-row"><input id="exit-reason" placeholder="Reason (e.g. errand, medical)"/></div>
+    <button class="btn btn-success" onclick="logExitApproval()" style="width:100%">✅ Log Exit Approval</button>
+  </div>
+  <div class="card">
+    <h3>Today's Exit Approvals</h3>
+    <div id="exit-approval-list"><p style="color:#64748b;font-size:13px">No exit approvals logged today.</p></div>
+  </div>
+</div>
+
+<!-- ID CARDS -->
+<div class="page" id="page-qrcodes">
+  <h2>🪪 Staff ID Cards</h2>
+  <p style="color:#64748b;font-size:13px;margin-bottom:14px">Each card shows the QR code and unique code. Print and laminate for staff.</p>
+  <div class="staff-grid" id="qr-grid"></div>
+</div>
+
+<!-- SETTINGS -->
+<div class="page" id="page-settings">
+  <h2>⚙ Settings</h2>
+  <div class="grid2">
+    <div>
+      <div class="card">
+        <h3>Change Admin Credentials</h3>
+        <p style="font-size:13px;color:#94a3b8;margin-bottom:14px;line-height:1.6">Update your admin username and password. You will be signed out after saving.</p>
+        <div class="pw-row">
+          <input id="new-user" placeholder="New username"/>
+          <input id="cur-pass" type="password" placeholder="Current password"/>
+          <input id="new-pass" type="password" placeholder="New password"/>
+          <input id="new-pass2" type="password" placeholder="Confirm new password"/>
+          <button class="btn btn-warn" onclick="changeCredentials()">Update Credentials</button>
+        </div>
+        <div id="pw-msg" style="font-size:13px;margin-top:10px"></div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <h3>Supabase Database</h3>
+        <p style="font-size:13px;color:#94a3b8;margin-bottom:14px;line-height:1.7">Create a free account at <strong>supabase.com</strong>, create a project, paste credentials below.</p>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <input id="sb-url" placeholder="https://xxxx.supabase.co"/>
+          <input id="sb-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6..."/>
+          <button class="btn btn-primary" onclick="saveSupabase()">Save & Connect</button>
+        </div>
+        <div id="sb-status" style="margin-top:10px;font-size:13px"></div>
+      </div>
+      <div class="card">
+        <h3>SQL — Run Once in Supabase</h3>
+        <pre style="background:#0f172a;padding:14px;border-radius:8px;font-size:11px;overflow-x:auto;line-height:1.8;color:#7dd3fc">
+create table staff (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  department text,
+  email text,
+  token text unique not null,
+  unique_code text unique not null,
+  closing_time time not null default '17:00',
+  active boolean default true,
+  created_at timestamptz default now()
+);
+create table exit_approvals (
+  id uuid primary key default gen_random_uuid(),
+  staff_id uuid references staff(id),
+  reason text,
+  used boolean default false,
+  logged_at timestamptz default now()
+);
+create table access_log (
+  id uuid primary key default gen_random_uuid(),
+  staff_id uuid references staff(id),
+  direction text,
+  result text,
+  via text,
+  reason text,
+  scanned_at timestamptz default now()
+);
+alter table staff enable row level security;
+alter table exit_approvals enable row level security;
+alter table access_log enable row level security;
+create policy "open" on staff for all using (true) with check (true);
+create policy "open" on exit_approvals for all using (true) with check (true);
+create policy "open" on access_log for all using (true) with check (true);
+        </pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ─── AUTH ────────────────────────────────────────
+const DEFAULT_USER = 'admin';
+const DEFAULT_PASS = 'staffgate2024';
+let adminLoggedIn = false;
+
+function getCredentials(){
+  return {
+    username: localStorage.getItem('sg_user') || DEFAULT_USER,
+    password: localStorage.getItem('sg_pass') || DEFAULT_PASS
+  };
+}
+
+function doLogin(){
+  const u = document.getElementById('login-user').value.trim();
+  const p = document.getElementById('login-pass').value;
+  const creds = getCredentials();
+  if(u === creds.username && p === creds.password){
+    adminLoggedIn = true;
+    document.getElementById('login-screen').classList.remove('visible');
+    document.getElementById('main-nav').style.display = 'flex';
+    document.getElementById('scanner-shell').style.display = 'none';
+    showPage('admin', document.querySelector('.nav-btn'));
+    document.getElementById('login-err').textContent = '';
+    document.getElementById('login-pass').value = '';
+  } else {
+    document.getElementById('login-err').textContent = 'Incorrect username or password.';
+    document.getElementById('login-pass').value = '';
+  }
+}
+
+function doLogout(){
+  adminLoggedIn = false;
+  document.getElementById('main-nav').style.display = 'none';
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('login-screen').classList.add('visible');
+  document.getElementById('login-user').value = '';
+  document.getElementById('login-pass').value = '';
+}
+
+function goScanner(){
+  document.getElementById('login-screen').classList.remove('visible');
+  document.getElementById('scanner-shell').style.display = 'block';
+  document.getElementById('main-nav').style.display = 'none';
+}
+
+function goAdminLogin(){
+  if(scannerRunning) stopScanner();
+  document.getElementById('scanner-shell').style.display = 'none';
+  document.getElementById('login-screen').classList.add('visible');
+}
+
+function changeCredentials(){
+  const newUser = document.getElementById('new-user').value.trim();
+  const curPass = document.getElementById('cur-pass').value;
+  const newPass = document.getElementById('new-pass').value;
+  const newPass2 = document.getElementById('new-pass2').value;
+  const msg = document.getElementById('pw-msg');
+  const creds = getCredentials();
+  if(curPass !== creds.password){ msg.innerHTML='<span style="color:#f87171">Current password is incorrect.</span>'; return; }
+  if(!newUser){ msg.innerHTML='<span style="color:#f87171">Enter a new username.</span>'; return; }
+  if(newPass.length < 6){ msg.innerHTML='<span style="color:#f87171">Password must be at least 6 characters.</span>'; return; }
+  if(newPass !== newPass2){ msg.innerHTML='<span style="color:#f87171">Passwords do not match.</span>'; return; }
+  localStorage.setItem('sg_user', newUser);
+  localStorage.setItem('sg_pass', newPass);
+  msg.innerHTML='<span style="color:#4ade80">✅ Credentials updated. Please sign in again.</span>';
+  setTimeout(doLogout, 1500);
+}
+
+// ─── STATE ───────────────────────────────────────
+let DB = { staff:[], exitApprovals:[], log:[] };
+let SB = { url:'', key:'' };
+let useSB = false;
+let scannerRunning = false;
+let html5QrCode = null;
+let scanMode = 'qr';
+
+// ─── INIT ─────────────────────────────────────────
+window.onload = async () => {
+  const saved = localStorage.getItem('staffgate_sb');
+  if(saved){ SB=JSON.parse(saved); document.getElementById('sb-url').value=SB.url; document.getElementById('sb-key').value=SB.key; }
+  if(SB.url && SB.key){
+    try{ await loadSB(); useSB=true; setBadge(true); } catch(e){ seedDemo(); }
+  } else { seedDemo(); }
+  generateCode();
+  refreshAll();
+};
+
+function seedDemo(){
+  DB.staff=[
+    {id:'s1',name:'Amaka Obi',department:'Finance',token:'tok-'+rnd(),unique_code:'AMK01',closing_time:'17:00',active:true},
+    {id:'s2',name:'Emeka Chukwu',department:'IT',token:'tok-'+rnd(),unique_code:'EMK02',closing_time:'18:00',active:true},
+    {id:'s3',name:'Fatima Bello',department:'HR',token:'tok-'+rnd(),unique_code:'FAT03',closing_time:'16:30',active:true},
+  ];
+  DB.exitApprovals=[{id:'e1',staff_id:'s1',reason:'Bank errand',used:false,logged_at:new Date().toISOString()}];
+  DB.log=[{id:'l1',staff_id:'s2',direction:'entry',result:'granted',via:'qr',reason:'Normal entry',scanned_at:new Date(Date.now()-7200000).toISOString()}];
+}
+
+function rnd(){ return Math.random().toString(36).substr(2,8); }
+
+// ─── CODE GENERATOR ───────────────────────────────
+function generateCode(){
+  const v='AEIOU', c='BCDFGHJKLMNPRSTVWXYZ', n='0123456789';
+  const p=(s,k)=>[...Array(k)].map(()=>s[Math.floor(Math.random()*s.length)]).join('');
+  document.getElementById('in-ucode').value=p(c,1)+p(v,1)+p(c,1)+p(n,2);
+}
+
+// ─── SUPABASE ─────────────────────────────────────
+async function sbFetch(path,opts={}){
+  const res=await fetch(SB.url+'/rest/v1/'+path,{
+    headers:{'apikey':SB.key,'Authorization':'Bearer '+SB.key,'Content-Type':'application/json','Prefer':'return=representation',...(opts.headers||{})},
+    ...opts
+  });
+  if(!res.ok) throw new Error(await res.text());
+  const t=await res.text(); return t?JSON.parse(t):[];
+}
+
+async function loadSB(){
+  DB.staff=await sbFetch('staff?select=*&order=created_at.desc');
+  const today=new Date().toISOString().split('T')[0];
+  DB.exitApprovals=await sbFetch(`exit_approvals?select=*&logged_at=gte.${today}T00:00:00&order=logged_at.desc`);
+  DB.log=await sbFetch('access_log?select=*&order=scanned_at.desc&limit=80');
+}
+
+async function saveSupabase(){
+  SB.url=document.getElementById('sb-url').value.trim().replace(/\/$/,'');
+  SB.key=document.getElementById('sb-key').value.trim();
+  const el=document.getElementById('sb-status');
+
+  // debug info
+  el.innerHTML=`<span style="color:#94a3b8">Testing...<br>URL: <code>${SB.url}</code><br>Key starts with: <code>${SB.key.substring(0,20)}...</code></span>`;
+
+  try{
+    const res = await fetch(SB.url+'/rest/v1/staff?select=id&limit=1', {
+      method:'GET',
+      headers:{
+        'apikey': SB.key,
+        'Authorization': 'Bearer '+SB.key,
+        'Content-Type': 'application/json'
+      }
+    });
+    const txt = await res.text();
+    if(!res.ok){
+      el.innerHTML=`<span style="color:#f87171">❌ Server said (${res.status}): ${txt}</span>`;
+      return;
+    }
+    localStorage.setItem('staffgate_sb',JSON.stringify(SB));
+    useSB=true; setBadge(true);
+    await loadSB(); refreshAll();
+    el.innerHTML='<span style="color:#4ade80">✅ Connected successfully!</span>';
+  } catch(e){
+    el.innerHTML=`<span style="color:#f87171">❌ Network error: ${e.message}<br><br>
+    Check:<br>
+    • Are you online?<br>
+    • Is the URL exactly: https://qlynpctbafzrqfhjslqd.supabase.co<br>
+    • No extra spaces in the key?</span>`;
+  }
+}
+
+function setBadge(live){
+  const b=document.getElementById('mode-badge');
+  b.textContent=live?'LIVE':'DEMO'; b.className='nbadge'+(live?' live':'');
+}
+
+// ─── STAFF ────────────────────────────────────────
+async function addStaff(){
+  const name=document.getElementById('in-name').value.trim();
+  const dept=document.getElementById('in-dept').value.trim();
+  const email=document.getElementById('in-email').value.trim();
+  const closing_time=document.getElementById('in-close').value||'17:00';
+  const unique_code=document.getElementById('in-ucode').value.trim().toUpperCase();
+  if(!name){ toast('Enter staff name','err'); return; }
+  if(!unique_code){ toast('Enter or generate a unique code','err'); return; }
+  if(DB.staff.find(s=>s.unique_code===unique_code)){ toast('Code already taken — generate another','err'); return; }
+  const rec={name,department:dept||'General',email:email||null,token:'tok-'+rnd()+Date.now(),unique_code,closing_time,active:true};
+  if(useSB){
+    try{ const [r]=await sbFetch('staff',{method:'POST',body:JSON.stringify(rec)}); DB.staff.unshift(r); }
+    catch(e){ toast('Error: '+e.message,'err'); return; }
+  } else { DB.staff.unshift({...rec,id:'s'+Date.now(),created_at:new Date().toISOString()}); }
+  ['in-name','in-dept','in-email'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('in-close').value='17:00';
+  generateCode();
+  toast('Staff member added!','ok'); refreshAll();
+}
+
+async function removeStaff(id){
+  if(!confirm('Remove this staff member?')) return;
+  if(useSB) await sbFetch('staff?id=eq.'+id,{method:'DELETE'});
+  DB.staff=DB.staff.filter(s=>s.id!==id); refreshAll();
+}
+
+// ─── EXIT APPROVALS ───────────────────────────────
+async function logExitApproval(){
+  const sid=document.getElementById('exit-staff-sel').value;
+  const reason=document.getElementById('exit-reason').value.trim();
+  if(!sid){ toast('Select a staff member','err'); return; }
+  const staff=DB.staff.find(s=>s.id===sid);
+  if(DB.exitApprovals.find(e=>e.staff_id===sid&&!e.used)){ toast(staff.name+' already has an unused approval','err'); return; }
+  const rec={staff_id:sid,reason:reason||null,used:false,logged_at:new Date().toISOString()};
+  if(useSB){
+    try{ const [r]=await sbFetch('exit_approvals',{method:'POST',body:JSON.stringify(rec)}); DB.exitApprovals.unshift(r); }
+    catch(e){ toast('Error: '+e.message,'err'); return; }
+  } else { DB.exitApprovals.unshift({...rec,id:'e'+Date.now()}); }
+  document.getElementById('exit-staff-sel').value='';
+  document.getElementById('exit-reason').value='';
+  toast('Exit approval logged for '+staff.name,'ok'); refreshAll();
+}
+
+async function revokeApproval(id){
+  if(!confirm('Revoke this exit approval?')) return;
+  if(useSB) await sbFetch('exit_approvals?id=eq.'+id,{method:'DELETE'});
+  DB.exitApprovals=DB.exitApprovals.filter(e=>e.id!==id);
+  toast('Approval revoked'); refreshAll();
+}
+
+// ─── SCAN MODE ────────────────────────────────────
+function setScanMode(mode,btn){
+  scanMode=mode;
+  document.querySelectorAll('.scan-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  if(mode==='qr'){
+    document.getElementById('qr-scan-area').style.display='block';
+    document.getElementById('code-input-area').style.display='none';
+    document.getElementById('scan-result').style.display='none';
+  } else {
+    if(scannerRunning) stopScanner();
+    document.getElementById('qr-scan-area').style.display='none';
+    document.getElementById('code-input-area').style.display='block';
+    document.getElementById('scan-result').style.display='none';
+    setTimeout(()=>document.getElementById('code-field').focus(),100);
+  }
+}
+
+async function submitCode(){
+  const raw=document.getElementById('code-field').value.trim().toUpperCase();
+  if(!raw){ toast('Enter a code','err'); return; }
+  document.getElementById('code-field').value='';
+  await processScan(null,document.getElementById('scan-dir').value,raw);
+}
+
+// ─── QR SCANNER ───────────────────────────────────
+function toggleScanner(){ scannerRunning?stopScanner():startScanner(); }
+
+function startScanner(){
+  document.getElementById('scan-result').style.display='none';
+  html5QrCode=new Html5Qrcode("qr-reader");
+  html5QrCode.start({facingMode:"environment"},{fps:10,qrbox:{width:260,height:260}},async txt=>{
+    stopScanner();
+    let token=txt;
+    try{ const u=new URL(txt); token=u.searchParams.get('token')||txt; }catch(_){}
+    await processScan(token,document.getElementById('scan-dir').value,null);
+  }).then(()=>{ scannerRunning=true; document.getElementById('scan-toggle').textContent='Stop Camera'; })
+    .catch(e=>toast('Camera error: '+e,'err'));
+}
+
+function stopScanner(){
+  if(html5QrCode) html5QrCode.stop().catch(()=>{});
+  html5QrCode=null; scannerRunning=false;
+  document.getElementById('scan-toggle').textContent='Start Camera';
+}
+
+function resetScan(){
+  document.getElementById('scan-result').style.display='none';
+  if(scanMode==='qr') startScanner();
+  else document.getElementById('code-field').focus();
+}
+
+// ─── CORE SCAN LOGIC ──────────────────────────────
+async function processScan(token,direction,uniqueCode){
+  if(useSB){ try{ await loadSB(); }catch(e){} }
+  let staff=null, via='qr';
+  if(token){ staff=DB.staff.find(s=>s.token===token&&s.active); via='qr'; }
+  else if(uniqueCode){ staff=DB.staff.find(s=>s.unique_code===uniqueCode&&s.active); via='code'; }
+
+  const resBox=document.getElementById('scan-result');
+  resBox.style.display='block'; resBox.className='';
+
+  if(!staff){
+    resBox.classList.add('result-deny');
+    setResult('🚫','Not Found','','This '+(via==='qr'?'QR code':'unique code')+' is not registered.');
+    return;
+  }
+
+  if(direction==='entry'){
+    await writeLog(staff.id,'entry','granted',via,'Normal entry');
+    resBox.classList.add('result-ok');
+    setResult('✅',staff.name,staff.department,'Entry granted\n'+staff.department+' · '+now());
+    return;
+  }
+
+  if(isAtOrAfterClosingTime(staff)){
+    await writeLog(staff.id,'exit','granted',via,'Closing time ('+staff.closing_time+')');
+    resBox.classList.add('result-ok');
+    setResult('✅',staff.name,staff.department,'Exit granted — closing time ('+staff.closing_time+')\n'+now());
+    return;
+  }
+
+  const approval=DB.exitApprovals.find(e=>e.staff_id===staff.id&&!e.used);
+  if(approval){
+    if(useSB){ await sbFetch('exit_approvals?id=eq.'+approval.id,{method:'PATCH',body:JSON.stringify({used:true})}); }
+    else approval.used=true;
+    const r=approval.reason?'('+approval.reason+')':'';
+    await writeLog(staff.id,'exit','granted',via,'Admin pre-approved '+r);
+    resBox.classList.add('result-ok');
+    setResult('✅',staff.name,staff.department,'Exit granted — admin approved '+r+'\n'+now());
+    refreshAll(); return;
+  }
+
+  await writeLog(staff.id,'exit','denied',via,'No approval & not closing time');
+  resBox.classList.add('result-deny');
+  setResult('🚫',staff.name,staff.department,'EXIT DENIED\nNo admin approval logged.\nClosing time: '+staff.closing_time);
+}
+
+function isAtOrAfterClosingTime(s){
+  const d=new Date(), [ch,cm]=s.closing_time.split(':').map(Number);
+  return d.getHours()>ch||(d.getHours()===ch&&d.getMinutes()>=cm);
+}
+
+async function writeLog(staff_id,direction,result,via,reason){
+  const rec={staff_id,direction,result,via,reason,scanned_at:new Date().toISOString()};
+  if(useSB){ try{ await sbFetch('access_log',{method:'POST',body:JSON.stringify(rec)}); }catch(e){} }
+  DB.log.unshift({...rec,id:'l'+Date.now()});
+}
+
+function setResult(icon,name,dept,msg){
+  document.getElementById('res-icon').textContent=icon;
+  document.getElementById('res-name').textContent=name;
+  document.getElementById('res-dept').textContent=dept;
+  document.getElementById('res-msg').textContent=msg;
+}
+
+// ─── QR / ID CARDS ────────────────────────────────
+function renderQRCodes(){
+  const grid=document.getElementById('qr-grid'); grid.innerHTML='';
+  if(!DB.staff.length){ grid.innerHTML='<p style="color:#64748b">No staff added yet.</p>'; return; }
+  DB.staff.forEach(s=>{
+    const div=document.createElement('div'); div.className='staff-card';
+    const qid='qr-'+s.id;
+    div.innerHTML=`<div class="sname">${s.name}</div><div class="sdept">${s.department}</div><div class="qr-wrap"><div id="${qid}"></div></div><div><span class="ucode">${s.unique_code}</span></div><div style="font-size:10px;color:#475569;margin-top:8px">Closes: ${s.closing_time}</div>`;
+    grid.appendChild(div);
+    setTimeout(()=>{
+      const url=location.href.split('?')[0]+'?token='+s.token;
+      new QRCode(document.getElementById(qid),{text:url,width:130,height:130,colorDark:'#000',colorLight:'#fff'});
+    },60);
+  });
+}
+
+// ─── RENDER ───────────────────────────────────────
+function refreshAll(){
+  const today=new Date().toDateString();
+  const todayLogs=DB.log.filter(l=>new Date(l.scanned_at).toDateString()===today);
+  const unused=DB.exitApprovals.filter(e=>!e.used&&new Date(e.logged_at).toDateString()===today);
+  document.getElementById('stat-staff').textContent=DB.staff.length;
+  document.getElementById('stat-exits').textContent=unused.length;
+  document.getElementById('stat-today').textContent=todayLogs.length;
+
+  const st=document.getElementById('staff-table');
+  st.innerHTML=DB.staff.length?DB.staff.map(s=>`
+    <tr><td>${s.name}</td><td>${s.department}</td><td><span class="ucode">${s.unique_code}</span></td>
+    <td style="color:#7dd3fc;font-weight:600">${s.closing_time}</td>
+    <td><button class="btn btn-danger btn-sm" onclick="removeStaff('${s.id}')">✕</button></td></tr>`)
+    .join(''):'<tr><td colspan="5" style="color:#64748b">No staff yet.</td></tr>';
+
+  const sel=document.getElementById('exit-staff-sel');
+  const prev=sel.value;
+  sel.innerHTML='<option value="">— Select Staff Member —</option>'+
+    DB.staff.filter(s=>s.active).map(s=>`<option value="${s.id}">${s.name} · ${s.unique_code} (${s.department})</option>`).join('');
+  if(prev) sel.value=prev;
+
+  const el=document.getElementById('exit-approval-list');
+  const tA=DB.exitApprovals.filter(e=>new Date(e.logged_at).toDateString()===today);
+  el.innerHTML=tA.length?tA.map(e=>{
+    const s=DB.staff.find(x=>x.id===e.staff_id)||{name:'Unknown',department:'',unique_code:''};
+    const badge=e.used?'<span class="badge bg">Used ✓</span>':'<span class="badge bb">Unused</span>';
+    return `<div class="exit-item"><div class="ei">
+      <div class="ename">${s.name} <span class="ucode" style="font-size:11px">${s.unique_code}</span></div>
+      <div class="emeta">${e.reason||'No reason'} · ${fmtTime(e.logged_at)}</div>
+    </div>${badge}${!e.used?`<button class="btn btn-danger btn-sm" onclick="revokeApproval('${e.id}')">Revoke</button>`:''}</div>`;
+  }).join(''):'<p style="color:#64748b;font-size:13px">No exit approvals logged today.</p>';
+
+  const lt=document.getElementById('log-table');
+  lt.innerHTML=DB.log.length?DB.log.slice(0,30).map(l=>{
+    const s=DB.staff.find(x=>x.id===l.staff_id)||{name:'Unknown'};
+    const dir=l.direction==='entry'?'<span class="badge bb">↓ In</span>':'<span class="badge by">↑ Out</span>';
+    const via=l.via==='qr'?'📷 QR':'🔢 Code';
+    const res=l.result==='granted'?'<span class="badge bg">Granted</span>':'<span class="badge br">Denied</span>';
+    return `<tr><td>${s.name}</td><td>${dir}</td><td style="font-size:11px">${via}</td><td>${res}</td><td style="font-size:11px;color:#64748b">${fmtTime(l.scanned_at)}</td></tr>`;
+  }).join(''):'<tr><td colspan="5" style="color:#64748b">No scans yet.</td></tr>';
+}
+
+// ─── PAGE NAV ─────────────────────────────────────
+function showPage(p,btn){
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(el=>el.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  if(btn) btn.classList.add('active');
+  if(p==='qrcodes') renderQRCodes();
+}
+
+// ─── UTILS ────────────────────────────────────────
+function now(){ return new Date().toLocaleTimeString(); }
+function fmtTime(iso){ if(!iso) return '—'; const d=new Date(iso); return d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}); }
+function toast(msg,type=''){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='show'+(type?' '+type:'');
+  setTimeout(()=>t.className='',3200);
+}
+</script>
+</body>
+</html>
