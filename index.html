@@ -417,7 +417,10 @@ function changeCredentials(){
 
 // ─── STATE ───────────────────────────────────────
 let DB = { staff:[], exitApprovals:[], log:[] };
-let SB = { url:'', key:'' };
+let SB = {
+  url: 'https://qlynpctbafzrqfhjslqd.supabase.co',
+  key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFseW5wY3RiYWZ6cnFmaGpzbHFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NjcxMjgsImV4cCI6MjA5NDQ0MzEyOH0.5oVIGGxY1Fj1uGRxi8b8FLIAXvR_JryrmlbEK4vQjso'
+};
 let useSB = false;
 let scannerRunning = false;
 let html5QrCode = null;
@@ -425,11 +428,14 @@ let scanMode = 'qr';
 
 // ─── INIT ─────────────────────────────────────────
 window.onload = async () => {
-  const saved = localStorage.getItem('staffgate_sb');
-  if(saved){ SB=JSON.parse(saved); document.getElementById('sb-url').value=SB.url; document.getElementById('sb-key').value=SB.key; }
-  if(SB.url && SB.key){
-    try{ await loadSB(); useSB=true; setBadge(true); } catch(e){ seedDemo(); }
-  } else { seedDemo(); }
+  // Always use hardcoded Supabase credentials
+  document.getElementById('sb-url').value = SB.url;
+  document.getElementById('sb-key').value = SB.key;
+  try{
+    await loadSB(); useSB=true; setBadge(true);
+  } catch(e){
+    seedDemo();
+  }
   generateCode();
   refreshAll();
 };
